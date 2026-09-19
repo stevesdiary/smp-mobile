@@ -19,13 +19,14 @@ class AuthUser {
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     final user = json['user'] as Map<String, dynamic>;
+    final role = user['role'];
     return AuthUser(
       token: json['token'] as String,
       userId: user['id'] as String,
-      email: user['email'] as String,
+      email: user['email'] as String? ?? '',
       firstName: user['firstName'] as String? ?? '',
       lastName: user['lastName'] as String? ?? '',
-      role: user['role'] as String? ?? '',
+      role: role is Map ? role['name'] as String? ?? '' : role as String? ?? '',
       tenantId: user['tenantId'] as String,
     );
   }

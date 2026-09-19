@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../auth/auth_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -9,6 +11,12 @@ class ProfileScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final user = context.watch<AuthProvider>().user;
+
+    final initials = user != null
+        ? '${user.firstName.isNotEmpty ? user.firstName[0] : ''}${user.lastName.isNotEmpty ? user.lastName[0] : ''}'
+            .toUpperCase()
+        : '?';
 
     return Scaffold(
       body: SafeArea(
@@ -25,12 +33,11 @@ class ProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // Avatar + name
                     CircleAvatar(
                       radius: 40,
                       backgroundColor: const Color(0xFFF0F0FF),
                       child: Text(
-                        'AO',
+                        initials,
                         style: textTheme.headlineMedium?.copyWith(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w700,
@@ -38,19 +45,35 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Text('Adaeze Obi', style: textTheme.headlineMedium),
+                    Text(
+                      user?.displayName ?? '—',
+                      style: textTheme.headlineMedium,
+                    ),
                     const SizedBox(height: 4),
-                    Text('adaeze.obi@email.com', style: textTheme.bodyMedium),
+                    Text(
+                      user?.email ?? '—',
+                      style: textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        user?.role ?? '',
+                        style: textTheme.labelMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
 
                     // Account section
                     _SectionCard(
                       children: [
-                        _SettingsRow(
-                          icon: Icons.person_outline,
-                          label: 'Edit Profile',
-                          onTap: () {},
-                        ),
                         _SettingsRow(
                           icon: Icons.lock_outline,
                           label: 'Change Password',
@@ -84,12 +107,14 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // Sign out
                     SizedBox(
                       width: double.infinity,
                       height: 52,
                       child: OutlinedButton.icon(
-                        onPressed: () => context.go('/login'),
+                        onPressed: () {
+                          context.read<AuthProvider>().logout();
+                          context.go('/login');
+                        },
                         icon: const Icon(Icons.logout, color: Color(0xFFBA1A1A)),
                         label: const Text(
                           'Sign Out',

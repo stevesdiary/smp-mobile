@@ -117,14 +117,35 @@ class HomeScreen extends StatelessWidget {
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    return const _ActivityFeedItem(
-                      icon: Icons.check_circle,
-                      iconColor: Colors.cyan,
-                      title: 'Attendance marked: Present',
-                      time: '08:15 AM',
-                    );
+                    final items = [
+                      const _ActivityFeedItem(
+                        icon: Icons.check_circle,
+                        iconColor: Color(0xFF00897B),
+                        title: 'Emeka Obi — Attendance: Present',
+                        time: '08:15 AM',
+                      ),
+                      const _ActivityFeedItem(
+                        icon: Icons.check_circle,
+                        iconColor: Color(0xFF00897B),
+                        title: 'Chidi Obi — Attendance: Present',
+                        time: '08:20 AM',
+                      ),
+                      const _ActivityFeedItem(
+                        icon: Icons.bar_chart_rounded,
+                        iconColor: Color(0xFF3B3BA8),
+                        title: 'Emeka Obi — New grade posted: Mathematics',
+                        time: '10:00 AM',
+                      ),
+                      const _ActivityFeedItem(
+                        icon: Icons.campaign_outlined,
+                        iconColor: Color(0xFFE65100),
+                        title: 'School Notice: End of term assembly',
+                        time: '11:30 AM',
+                      ),
+                    ];
+                    return items[index];
                   },
-                  childCount: 4, // Dummy count
+                  childCount: 4,
                 ),
               ),
             ),

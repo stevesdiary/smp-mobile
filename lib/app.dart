@@ -6,7 +6,9 @@ import 'ui/features/auth/login_screen.dart';
 import 'ui/features/auth/auth_provider.dart';
 import 'ui/core/main_shell.dart';
 import 'ui/features/home/home_screen.dart';
-import 'ui/features/attendance/attendance_screen.dart';
+import 'ui/features/children/children_screen.dart';
+import 'ui/features/notifications/notifications_screen.dart';
+import 'ui/features/profile/profile_screen.dart';
 
 GoRouter _buildRouter(AuthProvider auth) => GoRouter(
       initialLocation: '/',
@@ -31,21 +33,20 @@ GoRouter _buildRouter(AuthProvider auth) => GoRouter(
             ]),
             StatefulShellBranch(routes: [
               GoRoute(
-                path: '/attendance',
-                builder: (context, _) => const AttendanceScreen(),
+                path: '/children',
+                builder: (context, _) => const ChildrenScreen(),
               ),
             ]),
             StatefulShellBranch(routes: [
               GoRoute(
                 path: '/notifications',
-                builder: (context, _) => const Scaffold(body: Center(child: Text('Notifications'))),
+                builder: (context, _) => const NotificationsScreen(),
               ),
             ]),
             StatefulShellBranch(routes: [
               GoRoute(
                 path: '/profile',
-                builder: (context, _) =>
-                    const Scaffold(body: Center(child: Text('Profile'))),
+                builder: (context, _) => const ProfileScreen(),
               ),
             ]),
           ],

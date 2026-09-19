@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../data/models/notification_model.dart';
+import '../../../data/repositories/notifications_repository.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -7,259 +9,244 @@ class NotificationsScreen extends StatefulWidget {
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationModel {
-  final String id;
-  final String title;
-  final String message;
-  final String time;
-  final String date;
-  final _NotificationType type;
-  bool isRead;
-
-  _NotificationModel({
-    required this.id,
-    required this.title,
-    required this.message,
-    required this.time,
-    required this.date,
-    required this.type,
-    this.isRead = false,
-  });
-}
-
-enum _NotificationType { absence, grade, fee, general }
-
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  // Dummy data
-  final List<_NotificationModel> _notifications = [
-    _NotificationModel(
-      id: '1',
-      title: 'Child marked absent',
-      message: 'Emeka Obi was marked ABSENT on\nTuesday, 26 May 2026',
-      time: '9:02 AM',
-      date: 'Today',
-      type: _NotificationType.absence,
-    ),
-    _NotificationModel(
-      id: '2',
-      title: 'New grade posted',
-      message: 'Mathematics: 87% (B) - Algebra Quiz',
-      time: 'Yesterday',
-      date: 'Earlier',
-      type: _NotificationType.grade,
-      isRead: true,
-    ),
-    _NotificationModel(
-      id: '3',
-      title: 'Fee reminder',
-      message: 'Term 3 School Fees (₦50,000) are due next week on June 15, 2026.',
-      time: 'Mon',
-      date: 'Earlier',
-      type: _NotificationType.fee,
-      isRead: true,
-    ),
-    _NotificationModel(
-      id: '4',
-      title: 'School Newsletter',
-      message: 'May newsletter is now available. Read about our upcoming events.',
-      time: 'May 20',
-      date: 'Earlier',
-      type: _NotificationType.general,
-      isRead: true,
-    ),
-  ];
+  late Future<List<NotificationModel>> _future;
 
-  void _markAllAsRead() {
-    setState(() {
-      for (var n in _notifications) {
-        n.isRead = true;
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+    _future = notificationsRepository.getNotifications();
   }
 
-  void _dismissNotification(String id) {
-    setState(() {
-      _notifications.removeWhere((n) => n.id == id);
-    });
-  }
+  void _reload() => setState(() {
+        _future = notificationsRepository.getNotifications();
+      });
 
-  Color _getIconColor(_NotificationType type) {
-    final theme = Theme.of(context).colorScheme;
-    switch (type) {
-      case _NotificationType.absence:
-        return theme.error;
-      case _NotificationType.grade:
-        return const Color(0xFF34C759); // success green
-      case _NotificationType.fee:
-        return const Color(0xFFFF9F0A); // warning amber
-      case _NotificationType.general:
-        return const Color(0xFF5051BD); // interactive blue
-    }
+  Future<void> _markAllRead() async {
+    await notificationsRepository.markAllRead();
+    _reload();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+    final textTheme = theme.textTheme;
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        title: Text(
-          'Notifications',
-          style: theme.textTheme.displayLarge?.copyWith(fontSize: 28),
-        ),
-        actions: [
-          if (_notifications.isNotEmpty)
-            TextButton(
-              onPressed: _markAllAsRead,
-              child: Text(
-                'Mark all read',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF5051BD), // primaryLight
-                  fontWeight: FontWeight.w600,
+      body: SafeArea(
+        child: FutureBuilder<List<NotificationModel>>(
+          future: _future,
+          builder: (context, snapshot) {
+            final notifications = snapshot.data ?? [];
+            final unread = notifications.where((n) => !n.read).toList();
+            final read = notifications.where((n) => n.read).toList();
+
+            return CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  elevation: 0,
+                  backgroundColor: theme.scaffoldBackgroundColor,
+                  title: Text('Notifications', style: textTheme.headlineMedium),
+                  actions: [
+                    if (unread.isNotEmpty)
+                      TextButton(
+                        onPressed: _markAllRead,
+                        child: Text(
+                          'Mark all read',
+                          style: TextStyle(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-              ),
-            ),
-        ],
-      ),
-      body: _notifications.isEmpty
-          ? _buildEmptyState(theme)
-          : _buildList(theme),
-    );
-  }
 
-  Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.check_circle_outline,
-            size: 64,
-            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            "You're all caught up",
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildList(ThemeData theme) {
-    // Group notifications by date
-    final today = _notifications.where((n) => n.date == 'Today').toList();
-    final earlier = _notifications.where((n) => n.date != 'Today').toList();
-
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      children: [
-        if (today.isNotEmpty) ...[
-          _buildSectionHeader(theme, 'Today'),
-          ...today.map((n) => _buildNotificationItem(theme, n)),
-        ],
-        if (earlier.isNotEmpty) ...[
-          if (today.isNotEmpty) const SizedBox(height: 16),
-          _buildSectionHeader(theme, 'Earlier'),
-          ...earlier.map((n) => _buildNotificationItem(theme, n)),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildSectionHeader(ThemeData theme, String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Text(
-        title.toUpperCase(),
-        style: theme.textTheme.labelMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
+                if (snapshot.connectionState == ConnectionState.waiting)
+                  const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (snapshot.hasError)
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.error_outline, size: 48, color: Colors.grey.shade300),
+                          const SizedBox(height: 12),
+                          Text('Failed to load notifications', style: textTheme.bodyMedium),
+                          const SizedBox(height: 12),
+                          ElevatedButton(onPressed: _reload, child: const Text('Retry')),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (notifications.isEmpty)
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.notifications_none, size: 64, color: Colors.grey.shade300),
+                          const SizedBox(height: 16),
+                          Text('No notifications yet', style: textTheme.bodyMedium),
+                        ],
+                      ),
+                    ),
+                  )
+                else ...[
+                  if (unread.isNotEmpty) ...[
+                    _SectionHeader(label: 'New (${unread.length})'),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (_, i) => _NotificationTile(
+                            notification: unread[i],
+                            onTap: () async {
+                              await notificationsRepository.markRead([unread[i].id]);
+                              _reload();
+                            },
+                          ),
+                          childCount: unread.length,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (read.isNotEmpty) ...[
+                    const _SectionHeader(label: 'Earlier'),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (_, i) => _NotificationTile(notification: read[i]),
+                          childCount: read.length,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
+}
 
-  Widget _buildNotificationItem(ThemeData theme, _NotificationModel notification) {
-    final bgColor = notification.isRead
-        ? const Color(0xFFF4F3F8) // surfaceSecondary
-        : Colors.white;
+class _SectionHeader extends StatelessWidget {
+  final String label;
+  const _SectionHeader({required this.label});
 
-    return Dismissible(
-      key: Key(notification.id),
-      direction: DismissDirection.endToStart,
-      onDismissed: (direction) => _dismissNotification(notification.id),
-      background: Container(
-        color: theme.colorScheme.error,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete_outline, color: Colors.white),
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
       ),
+    );
+  }
+}
+
+class _NotificationTile extends StatelessWidget {
+  final NotificationModel notification;
+  final VoidCallback? onTap;
+
+  const _NotificationTile({required this.notification, this.onTap});
+
+  static const _typeIcons = {
+    'attendance': Icons.assignment_turned_in_outlined,
+    'grade': Icons.bar_chart_rounded,
+    'notice': Icons.campaign_outlined,
+    'event': Icons.event_outlined,
+    'payment': Icons.payment_outlined,
+  };
+
+  static const _typeColors = {
+    'attendance': Color(0xFF00897B),
+    'grade': Color(0xFF3B3BA8),
+    'notice': Color(0xFFE65100),
+    'event': Color(0xFF6A1B9A),
+    'payment': Color(0xFF2E7D32),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final icon = _typeIcons[notification.type] ?? Icons.notifications_outlined;
+    final color = _typeColors[notification.type] ?? const Color(0xFF050057);
+    final isUnread = !notification.read;
+
+    final d = notification.createdAt;
+    final timeLabel = '${d.day}/${d.month}/${d.year}';
+
+    return GestureDetector(
+      onTap: onTap,
       child: Container(
-        color: bgColor,
-        padding: const EdgeInsets.all(16),
-        // subtle left border if unread
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          border: !notification.isRead
-              ? const Border(
-                  left: BorderSide(
-                    color: Color(0xFF5051BD), // primaryLight
-                    width: 2.0,
-                  ),
-                )
-              : null,
+          color: isUnread ? color.withValues(alpha: 0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isUnread
+                ? color.withValues(alpha: 0.2)
+                : const Color(0xFF8E8E93).withValues(alpha: 0.15),
+            width: 0.5,
+          ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Colored dot icon
             Container(
-              margin: const EdgeInsets.only(top: 4, right: 12),
-              width: 12,
-              height: 12,
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: _getIconColor(notification.type),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
+              child: Icon(icon, color: color, size: 18),
             ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
                           notification.title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: notification.isRead
-                                ? FontWeight.w500
-                                : FontWeight.w700,
-                            color: theme.colorScheme.onSurface,
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: isUnread ? FontWeight.w600 : FontWeight.w400,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
-                      Text(
-                        notification.time,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                      if (isUnread)
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
                         ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
+                  Text(notification.body, style: textTheme.bodySmall),
+                  const SizedBox(height: 4),
                   Text(
-                    notification.message,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    timeLabel,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],

@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiClient {
-  // Use 10.0.2.2 for Android emulator to reach host localhost
-  static const String baseUrl = 'http://10.0.2.2:4000';
+  // iOS simulator uses localhost; Android emulator uses 10.0.2.2
+  static const String baseUrl = 'http://localhost:4000';
 
   String? _token;
   String? _tenantHint;

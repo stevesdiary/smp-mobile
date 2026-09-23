@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -88,11 +89,11 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        _QuickActionIcon(icon: Icons.assignment_turned_in_outlined, label: 'Attendance'),
-                        _QuickActionIcon(icon: Icons.bar_chart_rounded, label: 'Grades'),
-                        _QuickActionIcon(icon: Icons.calendar_month_outlined, label: 'Timetable'),
-                        _QuickActionIcon(icon: Icons.payment_outlined, label: 'Fees'),
+                      children: [
+                        _QuickActionIcon(icon: Icons.assignment_turned_in_outlined, label: 'Attendance', onTap: () => context.go('/home/attendance')),
+                        _QuickActionIcon(icon: Icons.bar_chart_rounded, label: 'Grades', onTap: () => context.go('/home/grades')),
+                        _QuickActionIcon(icon: Icons.calendar_month_outlined, label: 'Timetable', onTap: () => context.go('/home/timetable')),
+                        _QuickActionIcon(icon: Icons.payment_outlined, label: 'Fees', onTap: () => context.go('/home/fees')),
                       ],
                     ),
                   ],
@@ -249,8 +250,9 @@ class _ChildSummaryCard extends StatelessWidget {
 class _QuickActionIcon extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback onTap;
 
-  const _QuickActionIcon({required this.icon, required this.label});
+  const _QuickActionIcon({required this.icon, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -265,10 +267,9 @@ class _QuickActionIcon extends StatelessWidget {
             color: const Color(0xFFF0F0FF),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Icon(
-            icon,
-            color: const Color(0xFF3B3BA8), // Interactive Blue
-            size: 28,
+          child: IconButton(
+            icon: Icon(icon, color: const Color(0xFF3B3BA8), size: 28),
+            onPressed: onTap,
           ),
         ),
         const SizedBox(height: 8),

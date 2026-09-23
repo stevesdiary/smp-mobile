@@ -9,6 +9,10 @@ import 'ui/features/home/home_screen.dart';
 import 'ui/features/children/children_screen.dart';
 import 'ui/features/notifications/notifications_screen.dart';
 import 'ui/features/profile/profile_screen.dart';
+import 'ui/features/attendance/attendance_screen.dart';
+import 'ui/features/grades/grades_screen.dart';
+import 'ui/features/timetable/timetable_screen.dart';
+import 'ui/features/fees/fees_screen.dart';
 
 GoRouter _buildRouter(AuthProvider auth) => GoRouter(
       initialLocation: '/',
@@ -29,7 +33,16 @@ GoRouter _buildRouter(AuthProvider auth) => GoRouter(
               MainShell(navigationShell: navigationShell),
           branches: [
             StatefulShellBranch(routes: [
-              GoRoute(path: '/home', builder: (context, _) => const HomeScreen()),
+              GoRoute(
+                path: '/home',
+                builder: (context, _) => const HomeScreen(),
+                routes: [
+                  GoRoute(path: 'attendance', builder: (context, _) => const AttendanceScreen()),
+                  GoRoute(path: 'grades', builder: (context, _) => const GradesScreen()),
+                  GoRoute(path: 'timetable', builder: (context, _) => const TimetableScreen()),
+                  GoRoute(path: 'fees', builder: (context, _) => const FeesScreen()),
+                ],
+              ),
             ]),
             StatefulShellBranch(routes: [
               GoRoute(

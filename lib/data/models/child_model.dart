@@ -21,7 +21,7 @@ class Child {
         id: json['id'] as String,
         firstName: json['firstName'] as String,
         lastName: json['lastName'] as String,
-        studentId: json['studentId'] as String,
+        studentId: json['studentId'] as String? ?? '',
         dob: json['dob'] != null ? DateTime.parse(json['dob'] as String) : null,
       );
 }
